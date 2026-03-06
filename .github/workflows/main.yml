@@ -1,8 +1,7 @@
-name: Deploy to GitHub Pages
-
+name: Deploy React App
 on:
   push:
-    branches: ["main"] # וודא שזה שם ה-Branch שלך
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -10,25 +9,35 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  build_and_deploy:
     runs-on: ubuntu-latest
+    # זה אומר לגיטהאב שכל הפקודות רצות בתוך התיקייה שלך
+    defaults:
+      run:
+        working-directory: transport-fixed
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm install
-      - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./build # אם זה פרויקט Vite, שנה ל- ./dist
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        # ה-CI=false מבטיח שהבנייה לא תיעצר בגלל אזהרות קטנות
+        run: CI=false npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # כאן אנחנו אומרים לו איפה נמצאת תיקיית התוצר הסופי
+          path: transport-fixed/build
+
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
